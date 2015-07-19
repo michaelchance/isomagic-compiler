@@ -81,10 +81,11 @@
 							var styles = postcss.parse(contents,{from:f.in});
 							var out = root.append(styles).toResult().css;
 							//css compilation breaks the synchronous rules, but that's ok since it's just css.
-							processor.process(out,{from:f.in,to:f.out}).then(function(result){
-								//console.log(result);
-								fs.writeFile(f.out, result.css);
-								});
+							processor.process(out,{from:f.in,to:f.out}).then(function(out){
+								return function(result){
+									fs.writeFile(out, result.css);
+									}
+								}(f.out));
 							}
 						break;
 					case "html":
