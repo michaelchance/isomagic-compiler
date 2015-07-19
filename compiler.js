@@ -21,7 +21,7 @@
 			var cheerio = require('cheerio');
 			var TLC = require('tlc');
 			var templates = {};
-			var mediaurl = "";
+			var mediaUrl = "";
 			var compilerTLC = {
 				dump : function(context){console.dir(context.focus()); return true;},
 				translate : function(context){
@@ -38,7 +38,7 @@
 					return r;
 					},
 				imageurl : function(context){
-					var url = mediaurl;
+					var url = mediaUrl;
 					
 					var w = context.args('w');
 					var h = context.args('h');
@@ -92,6 +92,7 @@
 						break;
 					case "html":
 						templates = {}; //reset templates
+						mediaUrl = current.mediaUrl;
 						for(var j in current.compilerTemplates){
 							var contents = fs.readFileSync(current.compilerTemplates[j], 'utf-8');
 							var $ = cheerio.load(contents);
