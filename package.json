@@ -1,6 +1,6 @@
 {
   "name": "isomagic-compiler",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "An IsoMagic extension that compiles files",
   "main": "compiler.js",
   "scripts": {
