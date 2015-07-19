@@ -23,13 +23,15 @@
 			var templates = {};
 			var mediaurl = "";
 			var compilerTLC = {
+				dump : function(context){console.dir(context.focus()); return true;},
 				translate : function(context){
 					var templateid = context.args('templateid');
 					var data = context.args('data');
+					// console.log(data);
 					var r = false;
 					if(templateid && templates[templateid]){
 						var $tag = templates[templateid].clone();
-						r = context.tlc.run($tag,data);
+						r = context.tlc.run($tag,data, context.options);
 						var html = cheerio.html($tag);
 						context.focus(html);
 						}
