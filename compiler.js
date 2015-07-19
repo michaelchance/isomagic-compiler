@@ -92,7 +92,7 @@
 						break;
 					case "html":
 						templates = {}; //reset templates
-						mediaUrl = current.mediaUrl;
+						mediaUrl = current.mediaUrl || "";
 						for(var j in current.compilerTemplates){
 							var contents = fs.readFileSync(current.compilerTemplates[j], 'utf-8');
 							var $ = cheerio.load(contents);
