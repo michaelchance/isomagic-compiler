@@ -18,6 +18,7 @@
 	var extension = function(_app, config){
 		if(_app.server()){
 			var fs = require('fs');
+			var http = require('http');
 			var cheerio = require('cheerio');
 			var TLC = require('tlc');
 			var templates = {};
@@ -92,7 +93,7 @@
 						break;
 					case "html":
 						templates = {}; //reset templates
-						mediaUrl = current.mediaUrl || "";
+						mediaUrl = current.mediaUrl;
 						for(var j in current.compilerTemplates){
 							var contents = fs.readFileSync(current.compilerTemplates[j], 'utf-8');
 							var $ = cheerio.load(contents);
@@ -107,6 +108,115 @@
 							tlc.run($,current.vars,{tlcAttr:current.tlcAttr || 'data-tlc-compile'});
 							fs.writeFileSync(f.out, $.html());
 							}
+						break;
+					case "jquery-ui":
+						//compile CSS file
+						var prefix = ":root {";
+						for(var j in current.vars){prefix += '--'+j+': '+current.vars[j]+'; ';}
+						prefix += "}";
+						var f = current.cssFile;
+						var contents = fs.readFileSync(f.in, 'utf-8');
+
+						var root = postcss.parse(prefix,{from:'isomagic-compiler-'+i});
+						var styles = postcss.parse(contents,{from:f.in});
+						var out = root.append(styles).toResult().css;
+						//css compilation breaks the synchronous rules, but that's ok since it's just css.
+						processor.process(out,{from:f.in,to:f.out}).then(function(out){
+							return function(result){
+								fs.writeFile(out, result.css);
+								}
+							}(f.out));
+						
+						//fetch icon files from jquery ui themeroller
+						for(var i in current.icons){
+							var color = current.vars[current.icons[i].attr].substr(1);
+							var cb = function(path){
+								return function(response){
+									var file = fs.createWriteStream(path);
+									response.pipe(file);
+									}
+								}(current.icons[i].out);
+							http.get("http://download.jqueryui.com/themeroller/images/ui-icons_"+color+"_256x240.png", cb);
+							}
+						
+						//fetch bg files from jquery ui themeroller
+						for(var i in current.bgs){
+							var bg = current.bgs[i];
+							var texture = current.vars[bg.texture];
+							var opacity = current.vars[bg.opacity];
+							var color = current.vars[bg.color].substr(1);
+							var size = "";
+							switch(texture){
+								case "flat":
+								case "white-lines":
+									size = "40x100";
+									break;
+								case "highlight-soft":
+								case "highlight-hard":
+								case "inset-soft":
+								case "inset-hard":
+									size = "1x100";
+									break;
+								case "glass":
+									size = "1x400";
+									break;
+								case "diagonals-small":
+								case "diagonals-medium":
+								case "diagonals-thick":
+									size = "40x40";
+									break;
+								case "dots-small":
+									size = "2x2";
+									break;
+								case "dots-medium":
+									size = "4x4";
+									break;
+								case "gloss-wave":
+									size = "500x100";
+									break;
+								case "diamond":
+									size = "10x8";
+									break;
+								case "loop":
+									size = "21x21";
+									break;
+								case "carbon-fiber":
+									size = "8x9";
+									break;
+								case "diagonal-maze":
+									size = "10x10";
+									break;
+								case "diamond-ripple":
+									size = "22x22";
+									break;
+								case "hexagon":
+								case "3d-boxes":
+									size = "12x10";
+									break;
+								case "layered-circles":
+									size = "13x13";
+									break;
+								case "glow-ball":
+								case "spotlight":
+									size = "600x600";
+									break;
+								case "fine-grain":
+									size = "60x60";
+									break;
+								default:
+									size = "40x100";
+									texture = "flat";
+									break;
+								}
+							var cb = function(path){
+								return function(response){
+									var file = fs.createWriteStream(path);
+									response.pipe(file);
+									}
+								}(bg.out);
+							http.get("http://download.jqueryui.com/themeroller/images/ui-bg_"+texture+"_"+opacity+"_"+color+"_"+size+".png", cb);
+							}
+						
 						break;
 					default:
 						console.error('isomagic-compiler: unknown instruction type encountered '+current.type);
